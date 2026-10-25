@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dual Tool Workspace</title>
+<style>
+:root{
+  --bg-primary:#f8fafc;--card-bg:#fff;--text-primary:#0f172a;--text-secondary:#475569;
+  --border-color:#cbd5e1;--accent-color:#2563eb;--accent-hover:#1d4ed8;
+  --radius:8px;--shadow:0 4px 6px -1px rgb(0 0 0 / .1),0 2px 4px -2px rgb(0 0 0 / .1);
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+body{background:var(--bg-primary);color:var(--text-primary);min-height:100vh;padding:20px}
+.page-header{text-align:center;margin:0 auto 20px;max-width:1500px}
+.page-header h1{font-size:1.5rem;font-weight:650}
+.page-header p{margin-top:5px;color:var(--text-secondary);font-size:.9rem}
+.workspace{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(340px,.9fr);gap:20px;max-width:1800px;width:100%;margin:0 auto;align-items:stretch}
+.panel{min-width:0;background:var(--card-bg);padding:24px;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid #e2e8f0}
+.panel-heading{margin-bottom:5px;font-size:1.25rem;font-weight:650}
+.panel-description{color:var(--text-secondary);font-size:.85rem;margin-bottom:18px}
+.image-editor{display:grid;grid-template-columns:minmax(260px,.78fr) minmax(0,1.22fr);gap:22px;align-items:stretch;min-height:100%}
+.image-controls{min-width:0;display:flex;flex-direction:column;gap:15px}
+.control-group{display:flex;flex-direction:column;gap:6px;min-width:0}
+.control-group label,.field-label{font-size:.85rem;font-weight:600;color:var(--text-secondary)}
+textarea,select,input[type="text"]{width:100%;min-width:0;border:1px solid var(--border-color);border-radius:var(--radius);background:#fff;color:var(--text-primary);font-size:.92rem;outline:none}
+textarea{height:100px;padding:10px;resize:vertical}
+textarea:focus,select:focus,input[type="text"]:focus{border-color:var(--accent-color)}
+.row{display:flex;gap:12px}
+.row>.control-group{flex:1}
+select{height:38px;padding:0 10px;cursor:pointer}
+input[type="color"]{width:100%;height:38px;border:1px solid var(--border-color);border-radius:var(--radius);padding:3px;background:#fff;cursor:pointer}
+input[type="range"]{width:100%;accent-color:var(--accent-color);cursor:pointer}
+.color-label{display:flex;gap:8px;align-items:center}
+.color-label input[type=color]{width:42px;flex:0 0 42px}
+.color-value{font-size:.78rem;color:var(--text-secondary)}
+.toggle-group{display:flex;gap:8px}
+.btn-toggle{flex:1;height:38px;border:1px solid var(--border-color);background:#fff;border-radius:var(--radius);font-weight:bold;cursor:pointer}
+.btn-toggle.active{background:var(--accent-color);color:#fff;border-color:var(--accent-color)}
+.btn-toggle:hover:not(.active){background:#f1f5f9}
+.font-size-line{display:flex;align-items:center;gap:10px}
+.font-size-line output{min-width:48px;text-align:right;color:var(--text-secondary);font-size:.8rem}
+.image-output{min-width:0;display:flex;flex-direction:column;justify-content:center;align-self:stretch}
+.canvas-area{background:#fff;padding:10px;border:1px solid var(--border-color);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;min-height:360px;height:100%;overflow:hidden}
+#previewCanvas{display:block;width:100%;height:auto;max-width:100%;border:1px dashed var(--border-color);touch-action:none;cursor:grab}
+#previewCanvas.dragging{cursor:grabbing}
+.preview-caption{font-size:.76rem;color:var(--text-secondary);margin-top:8px}
+.download-box{display:grid;grid-template-columns:90px minmax(0,1fr);gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border-color)}
+.btn{border:0;border-radius:var(--radius);font-weight:600;cursor:pointer;transition:background .15s}
+.btn-primary{background:var(--accent-color);color:#fff;padding:10px 12px;min-height:40px}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-secondary{background:#fff;color:var(--text-primary);border:1px solid var(--border-color);padding:9px 12px;min-height:38px}
+.btn-secondary:hover{background:#f1f5f9}
+.status{font-size:.78rem;color:var(--text-secondary);min-height:16px;margin-top:7px}
+.sorter-panel{max-width:none}
+.number-input-wrap{position:relative;margin-bottom:18px}
+#numberInput{height:46px;padding:0 12px;cursor:text}
+.sort-options{display:flex;gap:12px;flex-wrap:wrap;justify-content:space-around;background:#f9fafb;padding:12px;border-radius:6px;border:1px solid var(--border-color);margin-bottom:22px}
+.radio-label{display:flex;align-items:center;gap:8px;font-size:.88rem;color:var(--text-primary);cursor:pointer}
+.radio-label input{accent-color:var(--accent-color);width:16px;height:16px}
+.result-box{background:#eef2ff;border:2px solid var(--accent-color);border-radius:8px;padding:16px;min-height:110px}
+.result-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.result-title{font-size:.9rem;font-weight:600;color:var(--text-secondary)}
+.result-output{font-size:clamp(1.25rem,2vw,2rem);font-weight:800;line-height:1.35;color:var(--accent-color);overflow-wrap:anywhere}
+.sort-note{font-size:.78rem;color:var(--text-secondary);margin-top:12px;line-height:1.45}
+@media(max-width:1100px){
+ .workspace{grid-template-columns:minmax(0,1fr)}
+ .image-editor{grid-template-columns:minmax(230px,.85fr) minmax(0,1.15fr)}
+ .canvas-area{min-height:320px}
+}
+@media(max-width:650px){
+ body{padding:12px}
+ .workspace{gap:14px}
+ .panel{padding:15px}
+ .image-editor{grid-template-columns:minmax(0,1fr)}
+ .canvas-area{min-height:0;height:auto}
+ .sort-options{justify-content:flex-start}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <h1>Dual Tool Workspace</h1>
+  <p>Two useful tools, together in one simple workspace.</p>
+</header>
+
+<main class="workspace">
+  <section class="panel" aria-labelledby="imageToolTitle">
+    <h2 class="panel-heading" id="imageToolTitle">Text to Image</h2>
+    <p class="panel-description">Style your words, then download them as an image.</p>
+
+    <div class="image-editor">
+      <div class="image-controls">
+        <div class="control-group">
+          <label for="textInput">Text</label>
+          <textarea id="textInput">Your Text Here</textarea>
+        </div>
+
+        <div class="row">
+          <div class="control-group">
+            <label for="bgColor">Background</label>
+            <div class="color-label"><input type="color" id="bgColor" value="#ffffff"><span class="color-value" id="bgColorValue">#FFFFFF</span></div>
+          </div>
+          <div class="control-group">
+            <label for="textColor">Text Color</label>
+            <div class="color-label"><input type="color" id="textColor" value="#000000"><span class="color-value" id="textColorValue">#000000</span></div>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="fontFamily">Font Family</label>
+          <select id="fontFamily">
+            <option value="Arial">Arial</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier New</option><option value="Georgia">Georgia</option><option value="Palatino">Palatino</option><option value="Verdana">Verdana</option><option value="Tahoma">Tahoma</option><option value="Cursive">Cursive</option><option value="Fantasy">Fantasy</option><option value="Monospace">Monospace</option><option value="Sans-Serif">Sans-Serif</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Style</label>
+          <div class="toggle-group">
+            <button class="btn-toggle" id="btnBold" type="button" aria-pressed="false">B</button>
+            <button class="btn-toggle" id="btnItalic" type="button" aria-pressed="false"><i>I</i></button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="fontSize">Font Size (<span id="fontSizeVal">40</span>px)</label>
+          <div class="font-size-line"><input type="range" id="fontSize" min="12" max="150" value="40"></div>
+        </div>
+
+        <div>
+          <div class="download-box">
+            <select id="exportFormat" aria-label="Export format"><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WebP</option></select>
+            <button class="btn btn-primary" id="btnDownload" type="button">Download</button>
+          </div>
+          <p class="status" id="imageStatus" aria-live="polite"></p>
+        </div>
+      </div>
+
+      <div class="image-output">
+        <div class="canvas-area"><canvas id="previewCanvas" width="600" height="400" aria-label="Text image preview"></canvas></div>
+        <p class="preview-caption">Drag the text in the preview to reposition it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel sorter-panel" aria-labelledby="sorterTitle">
+    <h2 class="panel-heading" id="sorterTitle">Number Sorter</h2>
+    <p class="panel-description">Sort English or Bengali numbers instantly.</p>
+
+    <div class="control-group">
+      <label for="numberInput">Enter numbers</label>
+      <div class="number-input-wrap">
+        <input type="text" id="numberInput" placeholder="12, 5, 98, 23, 1" autocomplete="off">
+      </div>
+      <button class="btn btn-secondary" id="pasteBtn" type="button">📋 Paste from Clipboard</button>
+      <p class="status" id="pasteStatus" aria-live="polite"></p>
+    </div>
+
+    <fieldset class="sort-options">
+      <legend class="field-label" style="width:100%;margin-bottom:2px">Sort direction</legend>
+      <label class="radio-label"><input type="radio" name="sortDirection" value="asc" checked><span>Small to High</span></label>
+      <label class="radio-label"><input type="radio" name="sortDirection" value="desc"><span>High to Small</span></label>
+    </fieldset>
+
+    <div class="result-box">
+      <div class="result-header">
+        <div class="result-title" id="resultTitle">Sorted Sequence:</div>
+        <button class="btn btn-primary" id="copyBtn" type="button">Copy Result</button>
+      </div>
+      <div class="result-output" id="resultOutput">-</div>
+    </div>
+    <p class="sort-note">Your input and sort direction are saved in this browser on this device.</p>
+    <p class="status" id="copyStatus" aria-live="polite"></p>
+  </section>
+</main>
+
+<script>
+/* Text to Image */
+(() => {
+  const canvas = document.getElementById('previewCanvas');
+  const ctx = canvas.getContext('2d');
+  const textInput = document.getElementById('textInput');
+  const bgInput = document.getElementById('bgColor');
+  const textColorInput = document.getElementById('textColor');
+  const fontFamily = document.getElementById('fontFamily');
+  const fontSize = document.getElementById('fontSize');
+  const fontSizeVal = document.getElementById('fontSizeVal');
+  const boldBtn = document.getElementById('btnBold');
+  const italicBtn = document.getElementById('btnItalic');
+  const imageStatus = document.getElementById('imageStatus');
+  let bold = false, italic = false, dragging = false;
+  let x = canvas.width / 2, y = canvas.height / 2, offsetX = 0, offsetY = 0;
+  let lines = [], blockW = 0, blockH = 0, lineH = 0, actualFont = 40;
+
+  function fontString(size) {
+    return `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}${size}px "${fontFamily.value}"`;
+  }
+  function makeLines(text, maxWidth) {
+    const result = [];
+    for (const paragraph of text.split(/\r\n|\r|\n/)) {
+      if (!paragraph) { result.push(''); continue; }
+      let line = '';
+      for (const word of paragraph.split(/\s+/)) {
+        const candidate = line ? `${line} ${word}` : word;
+        if (ctx.measureText(candidate).width <= maxWidth || !line) {
+          if (ctx.measureText(candidate).width <= maxWidth) line = candidate;
+          else {
+            let part = '';
+            for (const ch of Array.from(word)) {
+              if (part && ctx.measureText(part + ch).width > maxWidth) { result.push(part); part = ch; }
+              else part += ch;
+            }
+            line = part;
+          }
+        } else { result.push(line); line = word; }
+      }
+      result.push(line);
+    }
+    return result.length ? result : [''];
+  }
+  function layoutText() {
+    const padding = 28, maxWidth = canvas.width - padding * 2;
+    actualFont = Number(fontSize.value);
+    ctx.font = fontString(actualFont);
+    lines = makeLines(textInput.value, maxWidth);
+    lineH = actualFont * 1.2;
+    if (lines.length * lineH > canvas.height - padding * 2) {
+      lineH = (canvas.height - padding * 2) / lines.length;
+      actualFont = Math.min(actualFont, lineH / 1.2);
+    }
+    ctx.font = fontString(actualFont);
+    blockW = Math.max(1, ...lines.map(line => ctx.measureText(line).width));
+    blockH = lines.length * lineH;
+    x = Math.max(blockW / 2, Math.min(canvas.width - blockW / 2, x));
+    y = Math.max(blockH / 2, Math.min(canvas.height - blockH / 2, y));
+  }
+  function draw() {
+    ctx.fillStyle = bgInput.value;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (!textInput.value) return;
+    layoutText();
+    ctx.font = fontString(actualFont);
+    ctx.fillStyle = textColorInput.value;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const top = y - blockH / 2;
+    lines.forEach((line, i) => ctx.fillText(line, x, top + i * lineH + lineH / 2, canvas.width - 56));
+  }
+  function updateColors() {
+    document.getElementById('bgColorValue').textContent = bgInput.value.toUpperCase();
+    document.getElementById('textColorValue').textContent = textColorInput.value.toUpperCase();
+  }
+  [textInput, bgInput, textColorInput, fontFamily].forEach(el => el.addEventListener('input', () => { updateColors(); draw(); }));
+  fontSize.addEventListener('input', () => { fontSizeVal.textContent = fontSize.value; draw(); });
+  boldBtn.addEventListener('click', () => { bold = !bold; boldBtn.classList.toggle('active', bold); boldBtn.setAttribute('aria-pressed', String(bold)); draw(); });
+  italicBtn.addEventListener('click', () => { italic = !italic; italicBtn.classList.toggle('active', italic); italicBtn.setAttribute('aria-pressed', String(italic)); draw(); });
+
+  function point(e) {
+    const r = canvas.getBoundingClientRect();
+    return {x:(e.clientX-r.left)*canvas.width/r.width, y:(e.clientY-r.top)*canvas.height/r.height};
+  }
+  function hit(p) {
+    layoutText();
+    return Math.abs(p.x-x) <= blockW/2+16 && Math.abs(p.y-y) <= blockH/2+14;
+  }
+  canvas.addEventListener('pointerdown', e => {
+    const p = point(e);
+    if (!hit(p)) return;
+    dragging = true; offsetX = x-p.x; offsetY = y-p.y;
+    canvas.classList.add('dragging'); canvas.setPointerCapture(e.pointerId); e.preventDefault();
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const p = point(e); x = p.x+offsetX; y = p.y+offsetY; draw();
+  });
+  function stopDrag() { dragging = false; canvas.classList.remove('dragging'); }
+  canvas.addEventListener('pointerup', stopDrag);
+  canvas.addEventListener('pointercancel', stopDrag);
+
+  document.getElementById('btnDownload').addEventListener('click', () => {
+    draw();
+    const format = document.getElementById('exportFormat').value;
+    const mime = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
+    try {
+      canvas.toBlob(blob => {
+        if (!blob) { imageStatus.textContent = 'Could not create the image. Please try again.'; return; }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = `text-image.${format}`;
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+        imageStatus.textContent = `Downloaded ${format.toUpperCase()} image.`;
+      }, mime);
+    } catch (err) { imageStatus.textContent = 'Image download failed. Please try again.'; }
+  });
+  updateColors(); draw();
+})();
+
+/* Number Sorter */
+(() => {
+  const input = document.getElementById('numberInput');
+  const output = document.getElementById('resultOutput');
+  const title = document.getElementById('resultTitle');
+  const copyBtn = document.getElementById('copyBtn');
+  const copyStatus = document.getElementById('copyStatus');
+  const pasteStatus = document.getElementById('pasteStatus');
+  const directionKey = 'dualToolSortDirection';
+  const inputKey = 'dualToolNumbers';
+  function safeGet(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
+  function safeSet(key, value) { try { localStorage.setItem(key, value); } catch(e) {} }
+  const bnDigits = '০১২৩৪৫৬৭৮৯';
+  function normalize(s) { return s.replace(/[০-৯]/g, ch => String(bnDigits.indexOf(ch))); }
+  function getNumbers(value) {
+    return (normalize(value).match(/[-+]?(?:\d+\.?\d*|\.\d+)/g) || []).map(Number).filter(Number.isFinite);
+  }
+  const savedInput = safeGet(inputKey);
+  if (savedInput !== null) input.value = savedInput;
+  const savedDirection = safeGet(directionKey);
+  if (savedDirection === 'asc' || savedDirection === 'desc') {
+    const radio = document.querySelector(`input[name="sortDirection"][value="${savedDirection}"]`);
+    if (radio) radio.checked = true;
+  }
+  function process() {
+    const direction = document.querySelector('input[name="sortDirection"]:checked').value;
+    safeSet(inputKey, input.value); safeSet(directionKey, direction);
+    copyStatus.textContent = '';
+    const value = input.value.trim();
+    if (!value) { title.textContent = 'Sorted Sequence:'; output.textContent = '-'; return; }
+    const numbers = getNumbers(value);
+    if (!numbers.length) { output.textContent = 'Please enter valid numbers.'; return; }
+    numbers.sort((a,b) => direction === 'asc' ? a-b : b-a);
+    title.textContent = direction === 'asc' ? 'Sorted Sequence (Small to High):' : 'Sorted Sequence (High to Small):';
+    output.textContent = numbers.join(', ');
+  }
+  input.addEventListener('input', process);
+  document.querySelectorAll('input[name="sortDirection"]').forEach(r => r.addEventListener('change', process));
+  async function copyText(text) {
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); return true; } } catch(e) {}
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position='fixed'; ta.style.left='-9999px';
+    document.body.appendChild(ta); ta.select(); let ok=false;
+    try { ok=document.execCommand('copy'); } catch(e) {}
+    ta.remove(); return ok;
+  }
+  copyBtn.addEventListener('click', async () => {
+    const value = output.textContent;
+    if (!value || value === '-' || value === 'Please enter valid numbers.') { copyStatus.textContent = 'There is no result to copy.'; return; }
+    copyStatus.textContent = await copyText(value) ? 'Result copied.' : 'Clipboard unavailable. Select and copy the result manually.';
+  });
+  document.getElementById('pasteBtn').addEventListener('click', async () => {
+    pasteStatus.textContent = '';
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.readText) throw new Error('unavailable');
+      const value = await navigator.clipboard.readText();
+      if (!value) { pasteStatus.textContent = 'Clipboard is empty.'; return; }
+      input.value = value; process(); pasteStatus.textContent = 'Numbers pasted.'; input.focus();
+    } catch(e) { pasteStatus.textContent = 'Clipboard access blocked. Please paste into the input field manually.'; input.focus(); }
+  });
+  process();
+})();
+</script>
+</body>
+</html>
